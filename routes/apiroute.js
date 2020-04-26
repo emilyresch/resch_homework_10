@@ -1,6 +1,8 @@
 //requires/dependencies
-var fs = require("fs");
-var noteData = require("../db/db.json");
+var fs = require("fs")
+var noteData = JSON.parse(fs.readFileSync("./db/db.json", "utf8"));
+console.log(noteData);
+
 
 //GET POST and DELETE METHODS
 module.exports = function (app) {
@@ -8,72 +10,44 @@ module.exports = function (app) {
     //READ
     app.get("/api/notes", function (req, res) {
         //show db.json
-        res.send(noteData);
+        res.json(noteData);
     });
 
     //CREATE, SAVE, SEND
     app.post("/api/notes", function (req, res) {
-
         // console.log(req);
-        
-        //create random ID number for a new note
-        // var noteId = Math.floor(Math.floor(Math.random() * 10));
-        //create newNote object setup so there's an ID key/value pair
-        // var newNote = {
-        //     // title: req.body.title,
-        //     // text: req.body.text,
-        //     id: noteId
-        // };
-        // read the JSON file, parse the data
-        var savedNotes = JSON.parse(fs.readFile('../db/db.json', function(err){
-                if (err) throw err;
-        }));
-            
+        //create id numbers randomly
+        var noteId = noteData.length * Math.floor(Math.random() * 5);
+        //define what a new note is - comes from the request body
         var newNote = req.body;
-        var noteID = (savedNotes.length).toString(); //get placement of element in array
-        newNote.id = noteID;
-            //push user's new note into the JSON object
-        savedNotes.push(newNote);
-            //stringify user's new note and append it to the JSON file
-        fs.writeFileSync('../db/db.json', JSON.stringify(savedNotes), function (err) {
-                if (err) throw err;
-                //send/show user the note data
-                res.json(savedNotes);
-                //test that new note is created
-                console.log("new note created");
-            });
+        //give new property to note object
+        newNote.id = noteId;
 
-        });
-    // });
+        //push user's new note into the JSON object
+        noteData.push(newNote);
+        res.json(noteData);
+    });
+  
 
 
     // DELETE notes
     app.delete("/api/notes/:id", function (req, res) {
-        var savedNotes = JSON.parse(fs.readFile('../db/db.json', function(err){
-            if (err) throw err;
-        }));
-        //create variable to hold request parameters (specifically note's id)
-        var noteID = req.params.id;
-        var newIDs = 0; //start 
-        var newSavedNotes = savedNotes.filter(note => note.id != noteId);
-        //read db JSON file and parse
 
-        for(note of newSavedNotes){
-            note.id = newIDs.toString();
-            newIDs++;
+        //create variable to hold request parameters (specifically note's id) as a number
+        paramsNum = parseInt(req.params.id);
+
+        //loop over the array of note objects
+        for (let i = 0; i < noteData.length; i++) {
+            //if parameter id number matches the number of the note, splice it from the array of noteData
+            if (paramsNum === noteData[i].id) {
+                noteData.splice(i, 1);
+            }
+
         }
+        //send json as a response
+        res.json(noteData);
+        
+    });
 
-       
-        fs.writeFileSync("./db/db.json", JSON.stringify(newSavedNotes), function(err) {
-                if (err) throw err;
-                //send/show user the updated note data
-                res.json(newSavedNotes);
-                console.log("deleted note with ID " + noteID);
-            });
-
-            // res.send(noteData);
-        });
-    
 
 }
-
